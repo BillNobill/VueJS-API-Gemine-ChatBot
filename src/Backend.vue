@@ -1,4 +1,4 @@
-<template>
+<!-- <template>
   <div>
     <h1>Databases</h1>
     <ul>
@@ -30,4 +30,4 @@ export default {
 
 <style scoped>
 /* Adicione estilos se necessário */
-</style>
+</style> -->

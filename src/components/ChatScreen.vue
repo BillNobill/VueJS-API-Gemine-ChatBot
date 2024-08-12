@@ -19,8 +19,7 @@
     </form>
   </div>
 </template>
-
-<script>
+<script type="module">
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export default {
@@ -41,11 +40,14 @@ export default {
             direcioná-la para o processamento adequado.`,
         },
       ],
-      genAI: new GoogleGenerativeAI("AIzaSyD86naXzhpMMHqtxryQGpRYQXE9BjuxzQA"),
+      genAI: null,
       chatSession: null,
     };
   },
   mounted() {
+    this.genAI = new GoogleGenerativeAI(
+      "AIzaSyD86naXzhpMMHqtxryQGpRYQXE9BjuxzQA"
+    );
     const model = this.genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     this.chatSession = model.startChat({
       generationConfig: {
