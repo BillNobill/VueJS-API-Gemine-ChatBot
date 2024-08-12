@@ -85,6 +85,24 @@ export default {
 
       const botResponse = await this.sendMessageToBot(userMessage);
       this.appendMessage("bot-message", botResponse);
+
+      // Preparar as mensagens para salvar
+      const messages = [
+        { sender: "user", message: userMessage, timestamp: new Date() },
+        { sender: "bot", message: botResponse, timestamp: new Date() },
+      ];
+
+      // Enviar as mensagens ao servidor para salvar
+      await fetch("http://localhost:5000/saveConversation", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          conversation_id: "1234567890", // Você pode gerar um ID dinâmico ou usar um ID fixo para testes
+          messages,
+        }),
+      });
     },
   },
 };
