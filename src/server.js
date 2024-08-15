@@ -2,6 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 require("dotenv").config();
+const { v4: uuidv4 } = require('uuid'); // Importa o módulo UUID para gerar IDs únicos
 
 const app = express();
 app.use(cors());
@@ -29,30 +30,40 @@ const messageSchema = new mongoose.Schema({
 });
 
 const conversationSchema = new mongoose.Schema({
-  conversation_id: String,
+  conversation_id: { type: String, unique: true },
   messages: [messageSchema],
 });
 
 const Conversation = mongoose.model("Conversation", conversationSchema);
 
-app.post("/saveConversation", async (req, res) => {
-  console.log("Received POST request on /saveConversation"); // Adicione este log
+app.post("/startConversation", async (req, res) => {
+  try {
+    const conversation_id = uuidv4(); // Gera um novo ID único para a nova conversa
+    const conversation = new Conversation({ conversation_id, messages: [] });
+    await conversation.save();
+    res.status(200).json({ conversation_id });
+  } catch (error) {
+    res.status(500).json({ message: "Error starting new conversation" });
+  }
+});
 
+app.post("/saveConversation", async (req, res) => {
   const { conversation_id, messages } = req.body;
 
   try {
+    // Encontra ou cria uma nova conversa com o ID fornecido
     let conversation = await Conversation.findOne({ conversation_id });
 
-    if (conversation) {
-      conversation.messages = [...conversation.messages, ...messages];
-    } else {
+    if (!conversation) {
       conversation = new Conversation({ conversation_id, messages });
+    } else {
+      // Adiciona as novas mensagens ao histórico existente
+      conversation.messages = [...conversation.messages, ...messages];
     }
 
     await conversation.save();
     res.status(200).send("Conversa salva com sucesso.");
   } catch (error) {
-    console.error("Error saving conversation:", error); // Adicione este log
     res.status(500).send("Erro ao salvar a conversa: " + error.message);
   }
 });
