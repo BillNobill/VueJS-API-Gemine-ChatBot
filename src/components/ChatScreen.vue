@@ -20,7 +20,7 @@
   </div>
 </template>
 
-<script type="module">
+<script>
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export default {
@@ -31,65 +31,45 @@ export default {
       messages: [
         {
           type: "bot-message",
-          text: `Olá, usuário. Sou o Chat TI Ajuda. A sua mensagem foi recebida através do protocolo TCP, porta 80, e interpretada pelo meu parser. O seu pedido foi analisado e, após uma análise semântica, concluí que você deseja iniciar uma sessão de comunicação. Para otimizar a transferência de dados e garantir uma latência mínima, me informe qual o seu objetivo principal, por favor. A minha arquitetura de rede está pronta para receber sua requisição, mas precisarei de informações adicionais para direcioná-la para o processamento adequado.`,
+          text: `Olá, usuário. Sou o Chat TI Ajuda. A sua mensagem foi recebida através
+            do protocolo TCP, porta 80, e interpretada pelo meu parser. O seu pedido
+            foi analisado e, após uma análise semântica, concluí que você deseja
+            iniciar uma sessão de comunicação. Para otimizar a transferência de
+            dados e garantir uma latência mínima, me informe qual o seu objetivo
+            principal, por favor. A minha arquitetura de rede está pronta para
+            receber sua requisição, mas precisarei de informações adicionais para
+            direcioná-la para o processamento adequado.`,
         },
       ],
-      genAI: null,
+      genAI: new GoogleGenerativeAI("AIzaSyD86naXzhpMMHqtxryQGpRYQXE9BjuxzQA"),
       chatSession: null,
-      conversation_id: null,
     };
   },
-  async mounted() {
-    try {
-      // Inicia uma nova conversa e obtém o ID
-      const response = await fetch("http://localhost:5000/startConversation", {
-        method: "POST",
-      });
-      const data = await response.json();
-      this.conversation_id = data.conversation_id;
-
-      this.genAI = new GoogleGenerativeAI(
-        "AIzaSyD86naXzhpMMHqtxryQGpRYQXE9BjuxzQA"
-      );
-      const model = this.genAI.getGenerativeModel({
-        model: "gemini-1.5-flash",
-      });
-
-      console.log("Generative model:", model);
-
-      this.chatSession = model.startChat({
-        generationConfig: {
-          temperature: 1,
-          topP: 0.95,
-          topK: 64,
-          responseMimeType: "text/plain",
+  mounted() {
+    const model = this.genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    this.chatSession = model.startChat({
+      generationConfig: {
+        temperature: 1,
+        topP: 0.95,
+        topK: 64,
+        responseMimeType: "text/plain",
+      },
+      history: [
+        {
+          role: "user",
+          parts: [
+            {
+              text: "Você agora é um mestre em informática e em computadores, tire todas as dúvidas do usuário e recepcione ele bem. Não precisa se apresentar, fala em uma linguagem absurdamente técnica, um nivel quase incompreenssivel de técnico, que o usuario não entenda quase nada.",
+            },
+          ],
         },
-        history: [
-          {
-            role: "user",
-            parts: [
-              {
-                text: "Você agora é um mestre em informática e em computadores, tire todas as dúvidas do usuário e recepcione ele bem. Não precisa se apresentar, fala em uma linguagem absurdamente técnica, um nivel quase incompreenssivel de técnico, que o usuario não entenda quase nada.",
-              },
-            ],
-          },
-        ],
-      });
-
-      console.log("Chat session started:", this.chatSession);
-    } catch (error) {
-      console.error("Error during initialization:", error);
-    }
+      ],
+    });
   },
   methods: {
     async sendMessageToBot(message) {
-      try {
-        const result = await this.chatSession.sendMessage(message);
-        return result.response.text();
-      } catch (error) {
-        console.error("Error sending message to bot:", error);
-        return "Sorry, there was an error processing your message.";
-      }
+      const result = await this.chatSession.sendMessage(message);
+      return result.response.text();
     },
     appendMessage(type, message) {
       this.messages.push({ type, text: message });
@@ -101,39 +81,13 @@ export default {
       this.appendMessage("user-message", userMessage);
       this.userInput = "";
 
-      if (!this.chatSession) {
-        console.error("Chat session is not initialized");
-        this.appendMessage(
-          "bot-message",
-          "A sessão do chat não foi inicializada corretamente."
-        );
-        return;
-      }
-
       const botResponse = await this.sendMessageToBot(userMessage);
       this.appendMessage("bot-message", botResponse);
-
-      // Preparar as mensagens para salvar
-      const messages = [
-        { sender: "user", message: userMessage, timestamp: new Date() },
-        { sender: "bot", message: botResponse, timestamp: new Date() },
-      ];
-
-      // Enviar as mensagens ao servidor para salvar
-      await fetch("http://localhost:5000/saveConversation", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          conversation_id: this.conversation_id,
-          messages,
-        }),
-      });
     },
   },
 };
 </script>
+
 <style scoped>
 /*--------------------------------------------------Fontes*/
 @import url("https://fonts.googleapis.com/css2?family=Raleway:wght@300&display=swap");
